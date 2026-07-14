@@ -24,7 +24,8 @@ any code**.
 The brief was written at close-out time; other lanes have merged since.
 
 1. Run `~/code/pokemon/tools/workstreams.sh --fetch` for the live git state.
-2. In each repo the brief touches: `git log --oneline <brief-date>..origin/main`
+2. In each repo the brief touches:
+   `git log --oneline --since="<brief-date>" origin/main`
    — anything merged since the brief was written?
 3. Flag explicitly anything that changes the brief's picture (a contract that
    landed, an endpoint that now exists, a verdict that was ratified). If a

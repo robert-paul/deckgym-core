@@ -22,8 +22,15 @@ and push immediately.
 2. Push the branch. Confirm with `git log origin/<branch> -1`.
 3. If the work is complete: is the PR merged? (`gh pr view --json state,url`,
    or create one / merge per this repo's convention). Record the merge commit.
+   **deckgym-core exception:** card PRs go to *upstream* (bcollazo) and merge
+   on the maintainer's clock — there, "shipped" = PR open upstream + CI green;
+   never merge card branches into fork `main` directly (CLAUDE.md invariant:
+   stay close to upstream); sync fork `main` only after upstream merges.
 4. After merge: `git -C ~/code/<this-repo> pull --ff-only` so the local main
-   checkout matches GitHub, and delete the merged branch (local + remote).
+   checkout matches GitHub, then delete the branch. PRs here are
+   **squash-merged**, so `git branch -d` will refuse ("not fully merged") —
+   after confirming state = MERGED via `gh pr view`, use `git branch -D <branch>`
+   and `git push origin --delete <branch>`.
    Exception: do NOT delete the branch this Conductor workspace has checked
    out — Conductor needs it until the workspace is closed; say so in the report
    instead.
@@ -39,9 +46,12 @@ and push immediately.
    launch-gating item changed state.
 3. **ADR** in `~/code/pokemon/docs/decisions/` if a non-trivial decision was
    made (+ index row in `decisions/README.md`).
-4. Commit the umbrella changes directly to main and push
-   (`git fetch && git rebase origin/main` first; these are docs — conflicts are
-   rare, immediacy matters).
+4. Commit the umbrella changes directly to main and push. Update from any
+   **up-to-date** checkout of umbrella main (an umbrella Conductor worktree
+   synced to origin/main works too — push with `git push origin HEAD:main`).
+   If using `~/code/pokemon` and it has unrelated uncommitted files, use
+   `git pull --rebase --autostash` (plain rebase refuses on a dirty tree) and
+   leave the unrelated files untouched.
 
 ## Gate 3 — the kickoff brief (the handoff)
 
