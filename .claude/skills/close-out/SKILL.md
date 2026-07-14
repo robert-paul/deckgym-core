@@ -13,6 +13,22 @@ The umbrella repo lives at `~/code/pokemon` (docs, STATUS scoreboard, ADRs,
 kickoff briefs). Per ADR-0025, umbrella doc changes commit **directly to main**
 and push immediately.
 
+## Gate 0 — adversarial QA (before anything ships)
+
+If this session's non-trivial work has not already had an adversarial QA pass
+(umbrella CLAUDE.md: "QA gates everything" — and it applies to docs and tooling,
+not just code), run it now, before the checklist can go green:
+
+1. Spawn independent reviewer agent(s) instructed to **refute, not confirm** —
+   verify factual claims against git/GitHub reality, run the code/scripts, check
+   links and cross-doc consistency, attack instructions by following them
+   literally in the repo's real current state.
+2. Fix the findings. If the PR is already merged, findings become follow-up
+   fixes pushed in this same session — never left as notes.
+3. Record in the Gate-4 report: who reviewed, findings count, what was fixed.
+
+Skip only for trivial mechanical changes (typo-level), and say so explicitly.
+
 ## Gate 1 — everything shipped
 
 1. `git status` in this workspace. Every intended deliverable must be committed.
