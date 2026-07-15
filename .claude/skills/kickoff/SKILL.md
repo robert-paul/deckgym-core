@@ -10,6 +10,19 @@ names the lane or brief, e.g. `perception` → `docs/kickoffs/perception-next.md
 The umbrella repo lives at `~/code/pokemon`. Do all of this **before writing
 any code**.
 
+## 0 — No argument? Present the menu
+
+Robert shouldn't need to remember slugs. If invoked bare:
+
+1. List `~/code/pokemon/docs/kickoffs/*-next.md` and read the scoreboard
+   (`docs/STATUS.md`) to see which lanes are already in flight.
+2. Show a short menu: each open brief's lane, its one-line objective, and
+   whether the current repo is the one it targets (a brief for pokemon-app is
+   the wrong pick from a pokemon-backend workspace).
+3. Recommend ONE — the highest-priority open brief that targets this repo
+   (critical-path lanes K/P outrank support lanes) — and ask Robert to confirm
+   or pick another. Then proceed with it as the argument.
+
 ## 1 — Load the coordination state
 
 1. `git -C ~/code/pokemon fetch origin && git -C ~/code/pokemon pull --ff-only`
