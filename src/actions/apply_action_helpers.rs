@@ -137,6 +137,10 @@ fn start_turn_ability_outcomes(state: &State, player: usize) -> (Probabilities, 
             )
             .into_branches()
         }
+        AbilityMechanic::QuickGrowth => {
+            shared_mutations::quick_growth_evolution_outcomes_for_player(player, state)
+                .into_branches()
+        }
         _ => (vec![1.0], vec![noop_mutation()]),
     }
 }
@@ -387,6 +391,39 @@ fn checkapply_prevent_first_attack(
         }
     }
     false
+}
+
+/// True if the Pokémon at `target` has the Guts ability and `raw_damage` (after modifiers)
+/// would knock it out — i.e. it should flip a Guts survival coin for this damage.
+pub(crate) fn guts_would_flip(
+    state: &State,
+    attacking_ref: (usize, usize),
+    raw_damage: u32,
+    target: (usize, usize),
+    is_from_active_attack: bool,
+    context: DamageModifierContext<'_>,
+) -> bool {
+    if raw_damage == 0 {
+        return false;
+    }
+    let Some(pokemon) = state.in_play_pokemon[target.0][target.1].as_ref() else {
+        return false;
+    };
+    if !matches!(
+        get_ability_mechanic(&pokemon.card),
+        Some(AbilityMechanic::CoinFlipToSurviveKnockOut)
+    ) {
+        return false;
+    }
+    let modified = modify_damage(
+        state,
+        attacking_ref,
+        (raw_damage, target.0, target.1),
+        is_from_active_attack,
+        context,
+    );
+    let remaining = pokemon.get_remaining_hp();
+    remaining > 0 && modified >= remaining
 }
 
 /// This function applies damage (with modifiers and counterattacks) and handles K.O.s

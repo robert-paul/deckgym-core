@@ -55,15 +55,16 @@ pub(crate) fn forecast_attack(
     let base_outcomes = forecast_attack_inner(state, attack);
 
     if is_sub_attack {
-        apply_copied_attack_modifiers(acting_player, state, base_outcomes).into_outcomes()
+        apply_copied_attack_modifiers(acting_player, state, attack, base_outcomes).into_outcomes()
     } else {
-        apply_attack_common_modifiers(acting_player, state, base_outcomes).into_outcomes()
+        apply_attack_common_modifiers(acting_player, state, attack, base_outcomes).into_outcomes()
     }
 }
 
 fn apply_attack_common_modifiers(
     acting_player: usize,
     state: &State,
+    attack: &Attack,
     base_outcomes: AttackOutcomes,
 ) -> AttackOutcomes {
     let active = state.get_active(acting_player);
@@ -84,15 +85,18 @@ fn apply_attack_common_modifiers(
         outcomes = apply_block_attack_coin_flip(outcomes);
     }
 
-    apply_defender_damage_prevention_if_needed(acting_player, state, outcomes)
+    outcomes = apply_defender_damage_prevention_if_needed(acting_player, state, outcomes);
+    apply_defender_guts_if_needed(acting_player, state, attack, outcomes)
 }
 
 fn apply_copied_attack_modifiers(
     acting_player: usize,
     state: &State,
+    attack: &Attack,
     base_outcomes: AttackOutcomes,
 ) -> AttackOutcomes {
-    apply_defender_damage_prevention_if_needed(acting_player, state, base_outcomes)
+    let outcomes = apply_defender_damage_prevention_if_needed(acting_player, state, base_outcomes);
+    apply_defender_guts_if_needed(acting_player, state, attack, outcomes)
 }
 
 fn apply_defender_damage_prevention_if_needed(
@@ -121,6 +125,41 @@ fn apply_defender_damage_prevention_if_needed(
         return outcomes;
     }
     outcomes.split_with_damage_prevention(&prevented_indices)
+}
+
+/// Apply the defender's Guts ability (e.g. Ursaluna): each opponent in-play Pokémon with the
+/// ability flips a coin when this attack's damage would knock it out; on heads it survives
+/// with its remaining HP set to 10.
+fn apply_defender_guts_if_needed(
+    acting_player: usize,
+    state: &State,
+    attack: &Attack,
+    outcomes: AttackOutcomes,
+) -> AttackOutcomes {
+    let opponent = (acting_player + 1) % 2;
+    let guts_indices: Vec<usize> = state
+        .enumerate_in_play_pokemon(opponent)
+        .filter(|(_, pokemon)| {
+            pokemon
+                .card
+                .get_ability()
+                .and_then(|a| ability_mechanic_from_effect(&a.effect))
+                .map(|m| matches!(m, AbilityMechanic::CoinFlipToSurviveKnockOut))
+                .unwrap_or(false)
+        })
+        .map(|(idx, _)| idx)
+        .collect();
+
+    if guts_indices.is_empty() {
+        return outcomes;
+    }
+    outcomes.split_with_guts_survival(
+        state,
+        acting_player,
+        Some(&attack.title),
+        attack.effect.as_deref(),
+        &guts_indices,
+    )
 }
 
 fn forecast_attack_inner(state: &State, attack: &Attack) -> AttackOutcomes {
@@ -186,7 +225,9 @@ fn forecast_effect_attack_by_mechanic(
         Mechanic::ChargeYourTypeAnyWay { energy_type, count } => {
             charge_energy_any_way_to_type(attack.fixed_damage, *energy_type, *count)
         }
-        Mechanic::ManaphyOceanicGift => manaphy_oceanic(),
+        Mechanic::AttachEnergyFromZoneToTwoBenched { energy_type } => {
+            attach_energy_to_two_benched(*energy_type)
+        }
         Mechanic::PalkiaExDimensionalStorm => palkia_dimensional_storm(state),
         Mechanic::MegaKangaskhanExDoublePunchingFamily => {
             mega_kangaskhan_ex_double_punching_family(attack)
@@ -233,6 +274,9 @@ fn forecast_effect_attack_by_mechanic(
                 damage_and_self_multiple_status_attack(attack.fixed_damage, conditions.clone())
             }
         }
+        Mechanic::InflictStatusConditionsOnBothActive { conditions } => {
+            damage_and_both_active_multiple_status_attack(attack.fixed_damage, conditions.clone())
+        }
         Mechanic::ChanceStatusAttack { condition } => {
             damage_chance_status_attack(attack.fixed_damage, *condition)
         }
@@ -252,6 +296,10 @@ fn forecast_effect_attack_by_mechanic(
         Mechanic::ExtraDamageIfEx { extra_damage } => {
             extra_damage_if_opponent_is_ex(state, attack.fixed_damage, *extra_damage)
         }
+        Mechanic::ExtraDamageIfDefenderType {
+            energy_type,
+            extra_damage,
+        } => extra_damage_if_defender_type(state, attack.fixed_damage, *energy_type, *extra_damage),
         Mechanic::ExtraDamageIfOpponentHasSpecialCondition { extra_damage } => unseen_claw_attack(
             state.current_player,
             state,
@@ -538,6 +586,9 @@ fn forecast_effect_attack_by_mechanic(
         Mechanic::FlipUntilTailsDamage { damage_per_heads } => {
             flip_until_tails_attack(*damage_per_heads)
         }
+        Mechanic::FlipUntilTailsBonusDamage { damage_per_heads } => {
+            flip_until_tails_bonus_attack(attack.fixed_damage, *damage_per_heads)
+        }
         Mechanic::DirectDamageIfDamaged { damage } => direct_damage_if_damaged(*damage),
         Mechanic::AttachEnergyToBenchedBasic { energy_type } => {
             attach_energy_to_benched_basic(state.current_player, *energy_type)
@@ -618,6 +669,13 @@ fn forecast_effect_attack_by_mechanic(
             *energy_type,
             *damage_per_pokemon,
         ),
+        Mechanic::ExtraDamagePerPokemonInDiscard { damage_per_pokemon } => {
+            extra_damage_per_pokemon_in_discard_attack(
+                state,
+                attack.fixed_damage,
+                *damage_per_pokemon,
+            )
+        }
         Mechanic::ExtraDamagePerOwnPoint { damage_per_point } => {
             extra_damage_per_own_point_attack(state, attack.fixed_damage, *damage_per_point)
         }
@@ -1017,8 +1075,9 @@ fn waterfall_evolution(state: &State) -> AttackOutcomes {
     AttackOutcomes::from_parts(probabilities, outcomes)
 }
 
-/// For Manaphy's Oceanic attack: Choose 2 benched Pokémon and attach Water Energy to each
-fn manaphy_oceanic() -> AttackOutcomes {
+/// For Manaphy's Oceanic Gift / Carbink's Glittering Gift: Choose 2 benched Pokémon and attach
+/// an Energy of the given type to each
+fn attach_energy_to_two_benched(energy_type: EnergyType) -> AttackOutcomes {
     active_damage_effect_doutcome(0, move |_, state, action| {
         let benched_pokemon: Vec<usize> = state
             .enumerate_bench_pokemon(action.actor)
@@ -1029,7 +1088,7 @@ fn manaphy_oceanic() -> AttackOutcomes {
         if benched_pokemon.len() == 1 {
             // Only 1 benched Pokémon, can only choose that one
             choices.push(SimpleAction::Attach {
-                attachments: vec![(1, EnergyType::Water, benched_pokemon[0])],
+                attachments: vec![(1, energy_type, benched_pokemon[0])],
                 is_turn_energy: false,
             });
         } else if benched_pokemon.len() >= 2 {
@@ -1039,8 +1098,8 @@ fn manaphy_oceanic() -> AttackOutcomes {
                 for j in (i + 1)..benched_pokemon.len() {
                     choices.push(SimpleAction::Attach {
                         attachments: vec![
-                            (1, EnergyType::Water, benched_pokemon[i]),
-                            (1, EnergyType::Water, benched_pokemon[j]),
+                            (1, energy_type, benched_pokemon[i]),
+                            (1, energy_type, benched_pokemon[j]),
                         ],
                         is_turn_energy: false,
                     });
@@ -1792,6 +1851,21 @@ fn damage_and_self_multiple_status_attack(
     })
 }
 
+/// For attacks that deal damage to opponent and apply multiple status effects to both
+/// Active Pokémon (attacker and defender), e.g. Psyduck's Confusion Wave.
+fn damage_and_both_active_multiple_status_attack(
+    damage: u32,
+    statuses: Vec<StatusCondition>,
+) -> AttackOutcomes {
+    active_damage_effect_doutcome(damage, move |_, state, action| {
+        let opponent = (action.actor + 1) % 2;
+        for status in &statuses {
+            state.apply_status_condition(action.actor, 0, *status);
+            state.apply_status_condition(opponent, 0, *status);
+        }
+    })
+}
+
 /// Draw cards and deal damage in the same attack.
 fn draw_and_damage_outcome(damage: u32, amount: u8) -> AttackOutcomes {
     active_damage_effect_doutcome(damage, move |_, state, action| {
@@ -1917,6 +1991,16 @@ fn flip_until_tails_attack(damage_per_heads: u32) -> AttackOutcomes {
     // Truncate at 8 heads to keep the probability space manageable.
     AttackOutcomes::geometric_until_tails(8, move |heads| {
         active_damage_outcome((heads as u32) * damage_per_heads)
+    })
+}
+
+/// For attacks that deal a base amount and then flip a coin until tails, adding
+/// `damage_per_heads` for each heads (e.g. "does 30 more damage for each heads").
+/// The base is the attack's `fixed_damage`, so it is dealt even on an immediate tails.
+fn flip_until_tails_bonus_attack(base_damage: u32, damage_per_heads: u32) -> AttackOutcomes {
+    // Truncate at 8 heads to keep the probability space manageable.
+    AttackOutcomes::geometric_until_tails(8, move |heads| {
+        active_damage_outcome(base_damage + (heads as u32) * damage_per_heads)
     })
 }
 
@@ -2451,6 +2535,22 @@ fn extra_damage_if_opponent_is_ex(
     let opponent = (state.current_player + 1) % 2;
     let opponent_active = state.get_active(opponent);
     let damage = if opponent_active.card.is_ex() {
+        base_damage + extra_damage
+    } else {
+        base_damage
+    };
+    active_damage_doutcome(damage)
+}
+
+fn extra_damage_if_defender_type(
+    state: &State,
+    base_damage: u32,
+    energy_type: EnergyType,
+    extra_damage: u32,
+) -> AttackOutcomes {
+    let opponent = (state.current_player + 1) % 2;
+    let opponent_active = state.get_active(opponent);
+    let damage = if opponent_active.card.get_type() == Some(energy_type) {
         base_damage + extra_damage
     } else {
         base_damage
@@ -3409,6 +3509,20 @@ fn extra_damage_per_pokemon_type_in_discard_attack(
     active_damage_doutcome(total_damage)
 }
 
+// Hisuian Zoroark ex - Spiteful Illusion: Extra damage per Pokemon in own discard pile
+fn extra_damage_per_pokemon_in_discard_attack(
+    state: &State,
+    base_damage: u32,
+    damage_per_pokemon: u32,
+) -> AttackOutcomes {
+    let pokemon_count = state.discard_piles[state.current_player]
+        .iter()
+        .filter(|card| matches!(card, Card::Pokemon(_)))
+        .count() as u32;
+    let total_damage = base_damage + (pokemon_count * damage_per_pokemon);
+    active_damage_doutcome(total_damage)
+}
+
 /// Mega Manectric ex - Lightning Accelerator: Extra damage per point you have gotten
 fn extra_damage_per_own_point_attack(
     state: &State,
@@ -3635,6 +3749,143 @@ mod test {
         // Check probabilities sum to approximately 1
         let sum: f64 = probabilities.iter().sum();
         assert!((sum - 1.0).abs() < 0.001);
+    }
+
+    /// Forecast the given attacker's flip-until-tails attack through the real effect map, apply the
+    /// `heads`-th outcome, and return the damage dealt to a 160-HP receiver (which survives every
+    /// outcome tested here). Exercises the full card -> EFFECT_MECHANIC_MAP -> mechanic pipeline.
+    fn flip_until_tails_map_damage(attacker_id: CardId, heads: usize) -> u32 {
+        let mut rng = StdRng::seed_from_u64(0);
+        let mut state = State::default();
+        let attacker = get_card_by_enum(attacker_id);
+        let receiver = get_card_by_enum(CardId::A1003Venusaur); // 160 HP, no Fire weakness triggered
+        state.in_play_pokemon[0][0] = Some(to_playable_card(&attacker, false));
+        state.in_play_pokemon[1][0] = Some(to_playable_card(&receiver, false));
+        let attack = state
+            .get_active(0)
+            .get_attacks()
+            .iter()
+            .find(|a| {
+                a.effect
+                    .as_deref()
+                    .is_some_and(|e| e.contains("until you get tails"))
+            })
+            .cloned()
+            .expect("attacker should have a flip-until-tails attack");
+        let mechanic = EFFECT_MECHANIC_MAP
+            .get(attack.effect.as_deref().unwrap())
+            .expect("flip-until-tails effect should be mapped");
+        let (_probabilities, mut mutations) =
+            forecast_effect_attack_by_mechanic(&state, &attack, mechanic).into_branches();
+        let action = Action {
+            actor: 0,
+            action: SimpleAction::Attack(attack.clone()),
+            is_stack: false,
+        };
+        mutations.remove(heads)(&mut rng, &mut state, &action);
+        160 - state.get_active(1).get_remaining_hp()
+    }
+
+    #[test]
+    fn test_flip_until_tails_family_effect_map_wiring() {
+        // "N more damage for each heads" -> bonus mechanic (base from fixed_damage);
+        // "N damage for each heads" -> base-less mechanic.
+        assert!(matches!(
+            EFFECT_MECHANIC_MAP.get(
+                "Flip a coin until you get tails. This attack does 30 more damage for each heads."
+            ),
+            Some(Mechanic::FlipUntilTailsBonusDamage {
+                damage_per_heads: 30
+            })
+        ));
+        assert!(matches!(
+            EFFECT_MECHANIC_MAP.get(
+                "Flip a coin until you get tails. This attack does 40 more damage for each heads."
+            ),
+            Some(Mechanic::FlipUntilTailsBonusDamage {
+                damage_per_heads: 40
+            })
+        ));
+        assert!(matches!(
+            EFFECT_MECHANIC_MAP
+                .get("Flip a coin until you get tails. This attack does 40 damage for each heads."),
+            Some(Mechanic::FlipUntilTailsDamage {
+                damage_per_heads: 40
+            })
+        ));
+        assert!(matches!(
+            EFFECT_MECHANIC_MAP
+                .get("Flip a coin until you get tails. This attack does 70 damage for each heads."),
+            Some(Mechanic::FlipUntilTailsDamage {
+                damage_per_heads: 70
+            })
+        ));
+    }
+
+    #[test]
+    fn test_flip_until_tails_bonus_attack_adds_base_and_scales() {
+        // Same geometric shape as the base mechanic: 9 outcomes (0..=8 heads).
+        let (probabilities, _mutations) = flip_until_tails_bonus_attack(50, 30).into_branches();
+        assert_eq!(probabilities.len(), 9);
+
+        // Base is dealt even on an immediate tails; each heads adds `damage_per_heads`.
+        let attacker = get_card_by_enum(CardId::B3a051IronTreads);
+        let receiver = get_card_by_enum(CardId::A1003Venusaur); // 160 HP
+        for (heads, expected_damage) in [(0usize, 50u32), (1, 80), (2, 110)] {
+            let mut rng = StdRng::seed_from_u64(0);
+            let mut state = State::default();
+            state.in_play_pokemon[0][0] = Some(to_playable_card(&attacker, false));
+            state.in_play_pokemon[1][0] = Some(to_playable_card(&receiver, false));
+            let (_probabilities, mut mutations) =
+                flip_until_tails_bonus_attack(50, 30).into_branches();
+            let action = Action {
+                actor: 0,
+                action: SimpleAction::Attack(crate::models::Attack {
+                    energy_required: vec![],
+                    title: String::new(),
+                    fixed_damage: 0,
+                    effect: None,
+                }),
+                is_stack: false,
+            };
+            mutations.remove(heads)(&mut rng, &mut state, &action);
+            assert_eq!(
+                state.get_active(1).get_remaining_hp(),
+                160 - expected_damage,
+                "{heads} heads should deal 50 + {heads}*30"
+            );
+        }
+    }
+
+    #[test]
+    fn test_flip_until_tails_bonus_base_comes_from_card_fixed_damage() {
+        // Iron Treads (50 base) and Rayquaza (70 base) share the exact "30 more" effect text but
+        // different `fixed_damage` -> the base must come from the card, not a constant in the map.
+        assert_eq!(flip_until_tails_map_damage(CardId::B3a051IronTreads, 0), 50);
+        assert_eq!(flip_until_tails_map_damage(CardId::B3a051IronTreads, 1), 80);
+        assert_eq!(flip_until_tails_map_damage(CardId::PA063Rayquaza, 0), 70);
+        assert_eq!(flip_until_tails_map_damage(CardId::PA063Rayquaza, 1), 100);
+        // "40 more" cluster.
+        assert_eq!(
+            flip_until_tails_map_damage(CardId::A2125LickilickyEx, 0),
+            100
+        );
+        assert_eq!(
+            flip_until_tails_map_damage(CardId::A2125LickilickyEx, 1),
+            140
+        );
+
+        // No-base ("N damage for each heads") cards deal nothing on an immediate tails.
+        assert_eq!(flip_until_tails_map_damage(CardId::B1211Wooloo, 0), 0);
+        assert_eq!(flip_until_tails_map_damage(CardId::B1211Wooloo, 1), 40);
+        assert_eq!(
+            flip_until_tails_map_damage(CardId::A3118AlolanDugtrio, 0),
+            0
+        );
+        assert_eq!(
+            flip_until_tails_map_damage(CardId::A3118AlolanDugtrio, 1),
+            70
+        );
     }
 
     #[test]

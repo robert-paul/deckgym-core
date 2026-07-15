@@ -30,6 +30,13 @@ pub enum AbilityMechanic {
     MoveTypedEnergyFromBenchToActive {
         energy_type: EnergyType,
     },
+    /// Lunala ex's Psychic Connect: "Once during your turn, you may move all [energy_type] Energy
+    /// from 1 of your Benched [energy_type] Pokémon to your Active Pokémon." Unlike
+    /// `MoveTypedEnergyFromBenchToActive`, all of the chosen Pokémon's matching Energy moves at
+    /// once, it is once per turn, and the Active Pokémon may be any type.
+    MoveAllTypedEnergyFromBenchToActive {
+        energy_type: EnergyType,
+    },
     AttachEnergyFromZoneToActiveTypedPokemon {
         energy_type: EnergyType,
     },
@@ -87,6 +94,9 @@ pub enum AbilityMechanic {
     InfiltratingInspection,
     DiscardTopCardOpponentDeck,
     CoinFlipToPreventDamage,
+    /// Ursaluna's Guts: if this Pokémon would be Knocked Out by damage from an attack, flip a
+    /// coin. If heads, it is not Knocked Out and its remaining HP becomes 10.
+    CoinFlipToSurviveKnockOut,
     CheckupDamageToOpponentActive {
         amount: u32,
     },
@@ -129,6 +139,9 @@ pub enum AbilityMechanic {
         energy_type: Option<EnergyType>,
     },
     NoOpponentSupportInActive,
+    /// Snorlax's Massive Body: as long as this Pokémon is in the Active Spot, the opponent
+    /// can't play any Stadium cards from their hand.
+    NoOpponentStadiumInActive,
     DoubleGrassEnergy,
     PreventOpponentActiveEvolution,
     ReduceRetreatCostOfYourActiveBasicFromBench {
@@ -201,4 +214,8 @@ pub enum AbilityMechanic {
     /// Passive: while a Pokémon with this ability is in play, attack generation also offers the
     /// active evolved Pokémon the attacks from its previous evolutions (its under-cards).
     TimeRecall,
+    /// Caterpie's Quick Growth: "At the end of your opponent's turn, if this Pokémon is in the
+    /// Active Spot, put a random card from your deck that evolves from this Pokémon onto this
+    /// Pokémon to evolve it."
+    QuickGrowth,
 }

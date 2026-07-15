@@ -24,12 +24,16 @@ mod brambleghast_accept_pain_test;
 mod breloom_test;
 #[path = "pokemon/camerupt_eruption_test.rs"]
 mod camerupt_eruption_test;
+#[path = "pokemon/carbink_glittering_gift_test.rs"]
+mod carbink_glittering_gift_test;
 #[path = "pokemon/carracosta_blocking_shell_test.rs"]
 mod carracosta_blocking_shell_test;
 #[path = "pokemon/cascoon_harden_test.rs"]
 mod cascoon_harden_test;
 #[path = "pokemon/castform_test.rs"]
 mod castform_test;
+#[path = "pokemon/caterpie_quick_growth_test.rs"]
+mod caterpie_quick_growth_test;
 #[path = "pokemon/celebi_time_recall_test.rs"]
 mod celebi_time_recall_test;
 #[path = "pokemon/chansey_blissey_test.rs"]
@@ -72,6 +76,8 @@ mod hatterene_test;
 mod heracross_test;
 #[path = "pokemon/hisuian_lilligant_dress_up_test.rs"]
 mod hisuian_lilligant_dress_up_test;
+#[path = "pokemon/hisuian_zoroark_ex_test.rs"]
+mod hisuian_zoroark_ex_test;
 #[path = "pokemon/hitmonchan_ex_test.rs"]
 mod hitmonchan_ex_test;
 #[path = "pokemon/honchkrow_evil_admonition_test.rs"]
@@ -104,6 +110,8 @@ mod legacy_ability_logic_test;
 mod lucario_b3_test;
 #[path = "pokemon/lucario_fighting_coach_test.rs"]
 mod lucario_fighting_coach_test;
+#[path = "pokemon/lunala_ex_test.rs"]
+mod lunala_ex_test;
 #[path = "pokemon/magneton_test.rs"]
 mod magneton_test;
 #[path = "pokemon/magnezone_mirror_shot_test.rs"]
@@ -124,6 +132,8 @@ mod mega_steelix_adamantine_rolling_test;
 mod meowstic_test;
 #[path = "pokemon/meowth_carefree_steps_test.rs"]
 mod meowth_carefree_steps_test;
+#[path = "pokemon/milotic_ex_aqua_charge_test.rs"]
+mod milotic_ex_aqua_charge_test;
 #[path = "pokemon/miraidon_ex_test.rs"]
 mod miraidon_ex_test;
 #[path = "pokemon/morpeko_test.rs"]
@@ -132,6 +142,8 @@ mod morpeko_test;
 mod ninetales_ember_dance_test;
 #[path = "pokemon/porygonz_cyberjack_test.rs"]
 mod porygonz_cyberjack_test;
+#[path = "pokemon/psyduck_test.rs"]
+mod psyduck_test;
 #[path = "pokemon/rampardos_head_smash_test.rs"]
 mod rampardos_head_smash_test;
 #[path = "pokemon/roaring_moon_test.rs"]
@@ -144,6 +156,10 @@ mod shinx_hide_test;
 mod slither_wing_test;
 #[path = "pokemon/smoochum_test.rs"]
 mod smoochum_test;
+#[path = "pokemon/snorlax_massive_body_test.rs"]
+mod snorlax_massive_body_test;
+#[path = "pokemon/snover_ice_shard_test.rs"]
+mod snover_ice_shard_test;
 #[path = "pokemon/spewpa_signs_of_evolution_test.rs"]
 mod spewpa_signs_of_evolution_test;
 #[path = "pokemon/sunflora_quick_grow_beam_test.rs"]
@@ -158,6 +174,8 @@ mod tepig_stoke_test;
 mod terapagos_ex_test;
 #[path = "pokemon/typhlosion_fire_breath_test.rs"]
 mod typhlosion_fire_breath_test;
+#[path = "pokemon/ursaluna_guts_test.rs"]
+mod ursaluna_guts_test;
 #[path = "pokemon/vanilluxe_test.rs"]
 mod vanilluxe_test;
 #[path = "pokemon/vaporeon_ex_test.rs"]

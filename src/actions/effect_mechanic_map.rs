@@ -59,7 +59,12 @@ pub static EFFECT_MECHANIC_MAP: LazyLock<HashMap<&'static str, Mechanic>> = Lazy
         Mechanic::DiscardOpponentActiveToolsBeforeDamage,
     );
     // map.insert("Both Active Pokémon are now Asleep.", todo_implementation);
-    // map.insert("Both Active Pokémon are now Confused.", todo_implementation);
+    map.insert(
+        "Both Active Pokémon are now Confused.",
+        Mechanic::InflictStatusConditionsOnBothActive {
+            conditions: vec![StatusCondition::Confused],
+        },
+    );
     // map.insert("Change the type of a random Energy attached to your opponent's Active Pokémon to 1 of the following at random: [G], [R], [W], [L], [P], [F], [D], or [M].", todo_implementation);
     // map.insert("Change the type of the next Energy that will be generated for your opponent to 1 of the following at random: [G], [R], [W], [L], [P], [F], [D], or [M].", todo_implementation);
     map.insert(
@@ -76,7 +81,14 @@ pub static EFFECT_MECHANIC_MAP: LazyLock<HashMap<&'static str, Mechanic>> = Lazy
             require_attacker_energy_match: true,
         },
     );
-    map.insert("Choose 2 of your Benched Pokémon. For each of those Pokémon, take a [W] Energy from your Energy Zone and attach it to that Pokémon.", Mechanic::ManaphyOceanicGift);
+    map.insert(
+        "Choose 2 of your Benched Pokémon. For each of those Pokémon, take a [W] Energy from your Energy Zone and attach it to that Pokémon.",
+        Mechanic::AttachEnergyFromZoneToTwoBenched { energy_type: EnergyType::Water },
+    );
+    map.insert(
+        "Choose 2 of your Benched Pokémon. For each of those Pokémon, take a [P] Energy from your Energy Zone and attach it to that Pokémon.",
+        Mechanic::AttachEnergyFromZoneToTwoBenched { energy_type: EnergyType::Psychic },
+    );
     map.insert(
         "Choose either Poisoned or Confused. Your opponent's Active Pokémon is now affected by that Special Condition.",
         Mechanic::ChooseStatusToInflict {
@@ -645,16 +657,36 @@ pub static EFFECT_MECHANIC_MAP: LazyLock<HashMap<&'static str, Mechanic>> = Lazy
             damage_per_heads: 20,
         },
     );
-    // map.insert("Flip a coin until you get tails. This attack does 30 more damage for each heads.", todo_implementation);
-    // map.insert("Flip a coin until you get tails. This attack does 40 damage for each heads.", todo_implementation);
-    // map.insert("Flip a coin until you get tails. This attack does 40 more damage for each heads.", todo_implementation);
+    map.insert(
+        "Flip a coin until you get tails. This attack does 30 more damage for each heads.",
+        Mechanic::FlipUntilTailsBonusDamage {
+            damage_per_heads: 30,
+        },
+    );
+    map.insert(
+        "Flip a coin until you get tails. This attack does 40 damage for each heads.",
+        Mechanic::FlipUntilTailsDamage {
+            damage_per_heads: 40,
+        },
+    );
+    map.insert(
+        "Flip a coin until you get tails. This attack does 40 more damage for each heads.",
+        Mechanic::FlipUntilTailsBonusDamage {
+            damage_per_heads: 40,
+        },
+    );
     map.insert(
         "Flip a coin until you get tails. This attack does 60 damage for each heads.",
         Mechanic::FlipUntilTailsDamage {
             damage_per_heads: 60,
         },
     );
-    // map.insert("Flip a coin until you get tails. This attack does 70 damage for each heads.", todo_implementation);
+    map.insert(
+        "Flip a coin until you get tails. This attack does 70 damage for each heads.",
+        Mechanic::FlipUntilTailsDamage {
+            damage_per_heads: 70,
+        },
+    );
     // map.insert("Flip a coin. If heads, choose 1 of your opponent's Active Pokémon's attacks and use it as this attack.", todo_implementation);
     map.insert(
         "Flip a coin. If heads, discard a random Energy from your opponent's Active Pokémon.",
@@ -1051,7 +1083,13 @@ pub static EFFECT_MECHANIC_MAP: LazyLock<HashMap<&'static str, Mechanic>> = Lazy
         Mechanic::ExtraDamageIfEx { extra_damage: 80 },
     );
     // map.insert("If your opponent's Active Pokémon is a [D] Pokémon, this attack does 30 more damage.", todo_implementation);
-    // map.insert("If your opponent's Active Pokémon is a [F] Pokémon, this attack does 30 more damage.", todo_implementation);
+    map.insert(
+        "If your opponent's Active Pokémon is a [F] Pokémon, this attack does 30 more damage.",
+        Mechanic::ExtraDamageIfDefenderType {
+            energy_type: EnergyType::Fighting,
+            extra_damage: 30,
+        },
+    );
     // map.insert("If your opponent's Active Pokémon is a [G] Pokémon, this attack does 40 more damage.", todo_implementation);
     // map.insert("If your opponent's Active Pokémon is a [G] Pokémon, this attack does 50 more damage.", todo_implementation);
     // map.insert("If your opponent's Active Pokémon is a [M] Pokémon, this attack does 30 more damage.", todo_implementation);
@@ -1965,6 +2003,12 @@ pub static EFFECT_MECHANIC_MAP: LazyLock<HashMap<&'static str, Mechanic>> = Lazy
         },
     );
     // map.insert("This attack also does 50 damage to 1 of your opponent's Benched Pokémon.", todo_implementation);
+    map.insert(
+        "This attack does 20 more damage for each Pokémon in your discard pile.",
+        Mechanic::ExtraDamagePerPokemonInDiscard {
+            damage_per_pokemon: 20,
+        },
+    );
     map.insert(
         "This attack does 20 more damage for each [P] Pokémon in your discard pile.",
         Mechanic::ExtraDamagePerPokemonTypeInDiscard {

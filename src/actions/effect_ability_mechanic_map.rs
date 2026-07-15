@@ -39,6 +39,10 @@ pub static EFFECT_ABILITY_MECHANIC_MAP: LazyLock<HashMap<&'static str, AbilityMe
             "As long as this Pokémon is in the Active Spot, your opponent can't use any Supporter cards from their hand.",
             AbilityMechanic::NoOpponentSupportInActive,
         );
+        map.insert(
+            "As long as this Pokémon is in the Active Spot, your opponent can't play any Stadium cards from their hand.",
+            AbilityMechanic::NoOpponentStadiumInActive,
+        );
         // map.insert("As long as this Pokémon is on your Bench, attacks used by your Pokémon that evolve from Poliwhirl do +40 damage to your opponent's Active Pokémon.", todo_implementation);
         map.insert(
             "As long as this Pokémon is on your Bench, prevent all damage done to this Pokémon by attacks.",
@@ -143,7 +147,10 @@ pub static EFFECT_ABILITY_MECHANIC_MAP: LazyLock<HashMap<&'static str, AbilityMe
             "If this Pokémon is in the Active Spot, once during your turn, you may switch in 1 of your opponent's Benched Basic Pokémon to the Active Spot.",
             AbilityMechanic::VictreebelFragranceTrap,
         );
-        // map.insert("If this Pokémon would be Knocked Out by damage from an attack, flip a coin. If heads, this Pokémon is not Knocked Out, and its remaining HP becomes 10.", todo_implementation);
+        map.insert(
+            "If this Pokémon would be Knocked Out by damage from an attack, flip a coin. If heads, this Pokémon is not Knocked Out, and its remaining HP becomes 10.",
+            AbilityMechanic::CoinFlipToSurviveKnockOut,
+        );
         // map.insert("If you have Arceus or Arceus ex in play, attacks used by this Pokémon cost 1 less [C] Energy.", todo_implementation);
         map.insert(
             "If you have Arceus or Arceus ex in play, attacks used by this Pokémon do +30 damage to your opponent's Active Pokémon.",
@@ -251,7 +258,12 @@ pub static EFFECT_ABILITY_MECHANIC_MAP: LazyLock<HashMap<&'static str, AbilityMe
             AbilityMechanic::BurnOpponentActive,
         );
         // map.insert("Once during your turn, you may move all [D] Energy from each of your Pokémon to this Pokémon.", todo_implementation);
-        // map.insert("Once during your turn, you may move all [P] Energy from 1 of your Benched [P] Pokémon to your Active Pokémon.", todo_implementation);
+        map.insert(
+            "Once during your turn, you may move all [P] Energy from 1 of your Benched [P] Pokémon to your Active Pokémon.",
+            AbilityMechanic::MoveAllTypedEnergyFromBenchToActive {
+                energy_type: EnergyType::Psychic,
+            },
+        );
         // map.insert("Once during your turn, you may put a random Pokémon Tool card from your deck into your hand.", todo_implementation);
         map.insert(
             "Once during your turn, you may put a random Pokémon from your deck into your hand.",
@@ -287,6 +299,13 @@ pub static EFFECT_ABILITY_MECHANIC_MAP: LazyLock<HashMap<&'static str, AbilityMe
             "Once during your turn, you may take a [L] Energy from your Energy Zone and attach it to this Pokémon.",
             AbilityMechanic::AttachEnergyFromZoneToSelf {
                 energy_type: EnergyType::Lightning,
+                amount: 1,
+            },
+        );
+        map.insert(
+            "Once during your turn, you may take a [W] Energy from your Energy Zone and attach it to this Pokémon.",
+            AbilityMechanic::AttachEnergyFromZoneToSelf {
+                energy_type: EnergyType::Water,
                 amount: 1,
             },
         );
@@ -465,6 +484,12 @@ pub static EFFECT_ABILITY_MECHANIC_MAP: LazyLock<HashMap<&'static str, AbilityMe
         map.insert(
             "Once during your turn, you may remove a random Special Condition from your Active Pokémon.",
             AbilityMechanic::RemoveRandomSpecialConditionFromActive,
+        );
+
+        // b3b mechanics
+        map.insert(
+            "At the end of your opponent's turn, if this Pokémon is in the Active Spot, put a random card from your deck that evolves from this Pokémon onto this Pokémon to evolve it.",
+            AbilityMechanic::QuickGrowth,
         );
         map
     });

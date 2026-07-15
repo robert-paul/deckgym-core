@@ -50,6 +50,9 @@ pub enum Mechanic {
         conditions: Vec<StatusCondition>,
         target_opponent: bool,
     },
+    InflictStatusConditionsOnBothActive {
+        conditions: Vec<StatusCondition>,
+    },
     ChanceStatusAttack {
         condition: StatusCondition,
     },
@@ -72,6 +75,10 @@ pub enum Mechanic {
     CoinFlipDiscardEnergyFromOpponentActive,
     DiscardOpponentActiveToolsBeforeDamage,
     ExtraDamageIfEx {
+        extra_damage: u32,
+    },
+    ExtraDamageIfDefenderType {
+        energy_type: EnergyType,
         extra_damage: u32,
     },
     ExtraDamageIfOpponentHasSpecialCondition {
@@ -154,7 +161,11 @@ pub enum Mechanic {
         count: usize,
     },
     // Fairly unique mechanics
-    ManaphyOceanicGift,
+    /// Manaphy's Oceanic Gift / Carbink's Glittering Gift: choose 2 of your Benched Pokémon and
+    /// attach an Energy of the given type to each.
+    AttachEnergyFromZoneToTwoBenched {
+        energy_type: EnergyType,
+    },
     PalkiaExDimensionalStorm,
     MegaKangaskhanExDoublePunchingFamily,
     MoltresExInfernoDance,
@@ -204,6 +215,9 @@ pub enum Mechanic {
     },
     ExtraDamagePerPokemonTypeInDiscard {
         energy_type: EnergyType,
+        damage_per_pokemon: u32,
+    },
+    ExtraDamagePerPokemonInDiscard {
         damage_per_pokemon: u32,
     },
     ExtraDamagePerOwnPoint {
@@ -339,6 +353,11 @@ pub enum Mechanic {
         include_own_bench: bool,
     },
     FlipUntilTailsDamage {
+        damage_per_heads: u32,
+    },
+    /// Like `FlipUntilTailsDamage`, but the attack's `fixed_damage` is dealt as a base and each
+    /// heads adds `damage_per_heads` on top (e.g. "does 30 more damage for each heads").
+    FlipUntilTailsBonusDamage {
         damage_per_heads: u32,
     },
     DirectDamageIfDamaged {
