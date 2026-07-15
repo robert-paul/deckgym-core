@@ -127,6 +127,8 @@ strategy — upstream review latency is the bottleneck, so be easy to approve.
 4. Report the ✅/🚨 checklist with evidence (PR URL, test count, QA findings
    fixed). Then apply the ADR-0025 close-out gates — note the `/close-out`
    skill file left this worktree at step 3 (it lives on fork main, not
-   upstream); its gates are: everything pushed → docs updated (this section
+   upstream); its gates are: adversarial QA on any non-trivial output step 6
+   did NOT cover (queue edits, scorecard commits, STATUS edits — step 6 only
+   QA'd the card code) → everything pushed → docs updated (this section
    already covers them) → kickoff brief if the lane's direction changed →
    evidence checklist.

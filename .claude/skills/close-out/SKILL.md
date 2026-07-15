@@ -25,9 +25,11 @@ not just code), run it now, before the checklist can go green:
    literally in the repo's real current state.
 2. Fix the findings. If the PR is already merged, findings become follow-up
    fixes pushed in this same session — never left as notes.
-3. Record in the Gate-4 report: who reviewed, findings count, what was fixed.
+3. Record it in the Gate-4 report as one line: `✅ Gate 0 — <N> reviewer(s),
+   <M> findings, all fixed (<commit>)`.
 
-Skip only for trivial mechanical changes (typo-level), and say so explicitly.
+Skip only for trivial mechanical changes — objective bound: docs-only, single
+file, no semantic change — and state the skip explicitly in the report.
 
 ## Gate 1 — everything shipped
 

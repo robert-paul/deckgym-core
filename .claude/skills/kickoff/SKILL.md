@@ -14,14 +14,18 @@ any code**.
 
 Robert shouldn't need to remember slugs. If invoked bare:
 
-1. List `~/code/pokemon/docs/kickoffs/*-next.md` and read the scoreboard
-   (`docs/STATUS.md`) to see which lanes are already in flight.
-2. Show a short menu: each open brief's lane, its one-line objective, and
-   whether the current repo is the one it targets (a brief for pokemon-app is
-   the wrong pick from a pokemon-backend workspace).
-3. Recommend ONE — the highest-priority open brief that targets this repo
-   (critical-path lanes K/P outrank support lanes) — and ask Robert to confirm
-   or pick another. Then proceed with it as the argument.
+1. **First** `git -C ~/code/pokemon pull --ff-only` — the menu must be built
+   from current main, or last night's close-outs are invisible. Then list
+   `~/code/pokemon/docs/kickoffs/*-next.md` and read the scoreboard
+   (`docs/STATUS.md`) for in-flight lanes AND the Blocked-on column.
+2. Show a short menu: each open brief's lane, its one-line objective, and its
+   target repo (briefs carry a "Target:" line; if one doesn't, infer from its
+   pointers and say you inferred).
+3. Recommend ONE: highest-priority open brief that (a) targets this repo,
+   (b) is not blocked on Robert per the scoreboard (never recommend a lane the
+   session can't actually start), with critical-path lanes K/P outranking
+   support lanes. Ask Robert to confirm or pick another, then proceed with it
+   as the argument.
 
 ## 1 — Load the coordination state
 
